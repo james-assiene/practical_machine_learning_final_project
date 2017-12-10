@@ -1,0 +1,85 @@
+---
+title: "Practical machine learning final project"
+author: "James ASSIENE"
+date: "9 décembre 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load the datasets
+
+Train
+```{r}
+training = read.csv(file = "pml-training.csv")
+```
+
+Test
+```{r}
+testing = read.csv(file = "pml-testing.csv")
+```
+
+# Exploratory analysis
+
+Print variables
+```{r}
+names(training)
+```
+
+
+
+
+Near zero variance variables:
+```{r}
+library(caret)
+nzvVariables = nearZeroVar(training)
+```
+
+Number of variables before vs after
+```{r}
+length(names(training))
+length(names(training)) - length(nzvVariables)
+names(training)[nzvVariables]
+```
+
+
+Define new training set (with only non near zero variance variables)
+
+```{r}
+#training = training[, -nzvVariables]
+```
+
+# Predictive modeling
+
+<!-- Imputing missing values: -->
+<!-- ```{r} -->
+<!-- library(mice) -->
+<!-- tmpData = mice(data = training, method = "pmm") -->
+<!-- training = complete(tmpData) -->
+<!-- ``` -->
+
+
+```{r}
+cc = complete.cases(training)
+table(cc)
+training = training[cc,]
+```
+
+
+```{r}
+training_x = subset(training, select = -classe)
+training_y = training[,"classe"]
+modelFit = train(x = training_x, y = training_y, preProcess = c("center", "scale", "nzv"), method = "gbm", trControl = trainControl(method = "cv", number = 5))
+```
+
+Test:
+```{r}
+result = predict(modelFit, newdata = training)
+confusionMatrix(result, training_y)
+testResult = predict(modelFit, newdata = testing)
+```
+
+
+
